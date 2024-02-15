@@ -147,6 +147,8 @@ function calculatePriceForAccount(challengeType, swapType, stepType, sizeOfAccou
         const challengeType = account.querySelector('.challengeType').value;
         const swapType = account.querySelector('.swapType').value;
         const stepType = account.querySelector('.stepType').value;
+        const platform = account.querySelector('.platform').value;
+        const broker = account.querySelector('.broker').value;
         const addons = account.querySelectorAll('input[type="checkbox"]');
         
         const price = calculatePriceForAccount(challengeType, swapType, stepType, sizeOfAccount, addons);
@@ -161,7 +163,7 @@ function calculatePriceForAccount(challengeType, swapType, stepType, sizeOfAccou
 
         const summary = document.createElement('div');
         summary.classList.add('selection-summary');
-        summary.innerHTML = `Account ${index + 1}: ${challengeType} + ${swapType} + ${stepType} + ${sizeOfAccount}` +
+        summary.innerHTML = `Account ${index + 1}: ${challengeType} + ${swapType} + ${stepType} + ${sizeOfAccount} + ${platform} + ${broker} ` + 
                             (addons.length ? ' + ' + Array.from(addons).filter(addon => addon.checked).map(addon => addon.getAttribute('data-label')).join(' + ') : '') +
                             `<br>Price: $${price.toFixed(2)}`;
         selectionSummaries.appendChild(summary);
@@ -175,13 +177,27 @@ function calculatePriceForAccount(challengeType, swapType, stepType, sizeOfAccou
     totalPriceElement.innerHTML = `Official Discount: $${totalDiscount.toFixed(2)}<br>Total Price After Discount: $${finalTotalPrice.toFixed(2)}`;
 }
 
-    function addAccount() {
+   function addAccount() {
     accountCount++;
     const accountDiv = document.createElement('div');
     accountDiv.classList.add('account');
     
-    accountDiv.innerHTML = `
-    <div class="left-options">
+    // Create left options container
+    const leftOptionsContainer = document.createElement('div');
+    leftOptionsContainer.classList.add('left-options');
+    leftOptionsContainer.innerHTML = `
+        <div class="option-group">
+            <label>Name of the Client:</label>
+            <input type="text" class="client-name" placeholder="Enter name">
+        </div>
+        <div class="option-group">
+            <label>Email of the Client:</label>
+            <input type="email" class="client-email" placeholder="Enter email">
+        </div>
+        <div class="option-group">
+            <label>Country of the Client:</label>
+            <input type="text" class="client-country" placeholder="Enter country">
+        </div>
         <div class="option-group">
             <label>Challenge Type:</label>
             <select class="challengeType">
@@ -212,8 +228,27 @@ function calculatePriceForAccount(challengeType, swapType, stepType, sizeOfAccou
                 <option value="200K">200K</option>
             </select>
         </div>
-    </div>
-    <div class="right-options">
+        <div class="option-group">
+            <label>Platform:</label>
+            <select class="platform">
+                <option value="mt4">MT4</option>
+                <option value="mt5">MT5</option>
+            </select>
+        </div>
+        <div class="option-group">
+            <label>Broker:</label>
+            <select class="broker">
+                <option value="growthnext">GrowthNext</option>
+                <option value="fundednext">Funded</option>
+            </select>
+        </div>
+    `;
+    accountDiv.appendChild(leftOptionsContainer);
+
+    // Create right options container for addons
+    const rightOptionsContainer = document.createElement('div');
+    rightOptionsContainer.classList.add('right-options');
+    rightOptionsContainer.innerHTML = `
         <div class="checkbox-group">
             <input type="checkbox" id="lifeTimePayout-${accountCount}" name="lifeTimePayout" value="lifeTimePayout" data-label="95% Life Time Payout">
             <label for="lifeTimePayout-${accountCount}">95% Life Time Payout</label>
@@ -230,10 +265,10 @@ function calculatePriceForAccount(challengeType, swapType, stepType, sizeOfAccou
             <input type="checkbox" id="refund-${accountCount}" name="refund" value="refund" data-label="150% Refund">
             <label for="refund-${accountCount}">150% Refund</label>
         </div>
-    </div>
-`;
+    `;
+    accountDiv.appendChild(rightOptionsContainer);
 
-
+    // Add event listeners and update options
     const challengeTypeSelect = accountDiv.querySelector('.challengeType');
     const swapTypeSelect = accountDiv.querySelector('.swapType');
     const stepTypeSelect = accountDiv.querySelector('.stepType');
@@ -241,11 +276,8 @@ function calculatePriceForAccount(challengeType, swapType, stepType, sizeOfAccou
 
     challengeTypeSelect.addEventListener('change', function() {
         updateStepTypeOptions(stepTypeSelect, challengeTypeSelect.value);
-        updateAccountSizeVisibility(accountDiv); // Update visibility based on current selections
-        updateSelectionSummary(); // Update pricing and summary
-
-       
-        // Uncheck all addon checkboxes when challenge type changes
+        updateAccountSizeVisibility(accountDiv);
+        updateSelectionSummary();
         const addonCheckboxes = accountDiv.querySelectorAll('input[type="checkbox"]');
         addonCheckboxes.forEach(checkbox => {
             checkbox.checked = false;
@@ -253,26 +285,26 @@ function calculatePriceForAccount(challengeType, swapType, stepType, sizeOfAccou
     });
 
     swapTypeSelect.addEventListener('change', function() {
-        updateSelectionSummary(); // Update pricing and summary whenever Swap Type changes
+        updateSelectionSummary();
     });
 
     stepTypeSelect.addEventListener('change', function() {
-
-        updateSelectionSummary(); // Update pricing and summary whenever Step Type changes
+        updateSelectionSummary();
     });
 
     sizeOfAccountSelect.addEventListener('change', function() {
-        updateSelectionSummary(); // Update pricing and summary whenever Account Size changes
+        updateSelectionSummary();
     });
 
     updateStepTypeOptions(stepTypeSelect, challengeTypeSelect.value);
-    updateAccountSizeVisibility(accountDiv); // Ensure correct initial state for the "200K" option visibility and addons
+    updateAccountSizeVisibility(accountDiv);
 
     const addonInputs = accountDiv.querySelectorAll('input[type="checkbox"]');
     addonInputs.forEach(input => {
-        input.addEventListener('change', updateSelectionSummary); // Update pricing and summary whenever addon selections change
+        input.addEventListener('change', updateSelectionSummary);
     });
 
+    // Add remove button
     if (accountCount > 1) {
         const removeBtn = document.createElement('button');
         removeBtn.textContent = 'Remove This Account';
@@ -280,14 +312,15 @@ function calculatePriceForAccount(challengeType, swapType, stepType, sizeOfAccou
         removeBtn.onclick = function() {
             accountsContainer.removeChild(accountDiv);
             accountCount--;
-            updateSelectionSummary(); // Update the summary after removing an account
+            updateSelectionSummary();
         };
         accountDiv.appendChild(removeBtn);
     }
 
     accountsContainer.appendChild(accountDiv);
-    updateSelectionSummary(); // Initial summary update
+    updateSelectionSummary();
 }
+
 downloadInvoiceBtn.addEventListener('click', function() {
         trxidInputContainer.style.display = 'block';
     });
@@ -325,60 +358,140 @@ function generatePDF(trxid) {
     doc.setFontSize(12);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(0, 0, 0);
-    doc.text("ITEMS", 20, yPos);
-    doc.text("PRICE", 160, yPos, { align: "right" });
 
-    yPos += 10; // Space between column titles and first item
+    // Calculating positions based on percentage
+    const itemsWidth = 170 * 0.7; // 70% of the usable width for items
+    const itemsPositionX = 20; // Starting X for items (left side)
+    const separationLineX = itemsPositionX + itemsWidth; // Position for the separation line
+    const priceWidth = 150 * 0.2; // 30% of the usable width for price
+    const pricePositionX = separationLineX + (160 * 0.25); // Starting X for price (right side), just after the separation line
+
+    // Draw table headers
+    doc.setFont(undefined, 'bold');
+    doc.text("ITEMS", itemsPositionX, yPos);
+    doc.text("PRICE", pricePositionX, yPos, { align: "right" });
+
+    yPos += 10; // Move to next row
+
+    let accountCount = 0; // Counter to track the number of accounts on each page
+    let totalAccounts = document.querySelectorAll('.account').length;
 
     // Loop through each account to add their details to the PDF
     document.querySelectorAll('.account').forEach((account, index) => {
+        const clientName = account.querySelector('.client-name').value;
+        const clientEmail = account.querySelector('.client-email').value;
+        const clientCountry = account.querySelector('.client-country').value;
         const challengeType = account.querySelector('.challengeType').value;
         const swapType = account.querySelector('.swapType').value;
         const stepType = account.querySelector('.stepType').value;
         const sizeOfAccount = account.querySelector('.sizeOfAccount').value;
+        const platform = account.querySelector('.platform').value;
+        const broker = account.querySelector('.broker').value;
         const addons = Array.from(account.querySelectorAll('input[type="checkbox"]:checked')).map(addon => addon.getAttribute('data-label')).join(', ');
 
-        let itemDetails = `Account ${index + 1}: ${challengeType}, ${swapType}, ${stepType}, Size: ${sizeOfAccount}`;
-        if (addons) itemDetails += `, Addons: ${addons}`;
+        // Display client information first.
+        yPos += 5;
+        doc.setFont(undefined, 'bold'); // Switch to bold font
+        doc.setTextColor(128, 0, 128); // Set text color to purple
 
-        let price = calculatePriceForAccount(challengeType, swapType, stepType, sizeOfAccount, account.querySelectorAll('input[type="checkbox"]'));
-        
-        // Split long item details if necessary
-        let splitItemDetails = doc.splitTextToSize(itemDetails, 85); // Adjust width to fit before the line
+        // Display "Account" and index with the new style
+        doc.text(`Account ${index + 1}:`, itemsPositionX, yPos);
 
-        // Check if adding the content will exceed the page height
-        if (yPos + (splitItemDetails.length + 1) * 6 > 280) { // Adjust the value based on your page size
-            doc.addPage(); // Add a new page
-            yPos = 10; // Reset yPos for the new page
+        // Reset yPos, font style, and color for subsequent text
+        yPos += 10; // Move to next row
+        doc.setFont(undefined, 'normal'); // Switch back to normal font
+        doc.setTextColor(0, 0, 0); // Reset text color to black
+
+        // Continue with the rest of the text in normal style
+        doc.text(`Client Name: ${clientName}`, itemsPositionX, yPos);
+        yPos += 10;
+        doc.text(`Email: ${clientEmail}`, itemsPositionX, yPos);
+        yPos += 10;
+        doc.text(`Country: ${clientCountry}`, itemsPositionX, yPos);
+        yPos += 20; // Add a 2-line gap after "Country"
+
+        // Display other account details
+        let addonsDisplay;
+        let addonsLineGap = '';
+        if (addons) {
+            const addonList = addons.split(', ');
+            if (addonList.length === 1) {
+                addonsDisplay = `Add On: ${addons}`;
+                addonsLineGap = '\n'; // Add line gap only if addons are selected
+            } else {
+                addonsDisplay = `AddOns:\n${addonList.join('\n')}`;
+                addonsLineGap = '\n'; // Add line gap only if addons are selected
+            }
+        } else {
+            addonsDisplay = '';
+            addonsLineGap = ''; // No line gap if no addons are selected
         }
 
-        doc.text(splitItemDetails, 20, yPos);
-        doc.text(`$${price.toFixed(2)}`, 160, yPos, { align: "right" });
+        const accountDetails = [
+            `Model: ${challengeType} + ${swapType} + ${stepType} + ${sizeOfAccount}`,
+            `Platform & Broker: ${platform} + ${broker}`,
+            addonsDisplay,
+            addonsLineGap // Include the line gap here
+        ];
 
-        yPos += (splitItemDetails.length + 1) * 6; // Adjust Y position based on the number of lines
-    });
+        accountDetails.forEach(detail => {
+            doc.text(detail, itemsPositionX, yPos);
+            yPos += 10;
+        });
 
-    // Ensure dynamic adjustment of the separation line
-    doc.setDrawColor(0); // Black color for separation line
-    doc.line(135, 28, 135, yPos); // Adjust line to match items length
+        // Calculate and display the price for this account
+        const price = calculatePriceForAccount(challengeType, swapType, stepType, sizeOfAccount, account.querySelectorAll('input[type="checkbox"]'));
+        let priceStr = `$${price.toFixed(2)}`;
+        doc.text(priceStr, 180, yPos - 5, { align: "right" }); // Ensure price is aligned to the right, within the price section
 
-    // Space before displaying TRXID
-    yPos += 10; 
-    doc.text(`TRXID: ${trxid}`, 20, yPos);
+        yPos += 10; // Move to next row for the next account or final summary
 
-    // Formatting for Official Discount and Total Price After Discount
+        accountCount++; // Increment the account count for this page
+
+        // If two accounts have been displayed on this page or if this is the last account, start a new page for TRXID, discount, and total price after discount
+        if (accountCount === 2 || index === totalAccounts - 1) {
+    doc.setDrawColor(128, 0, 128); // Set draw color to purple for the separation line
+    doc.setLineWidth(0.5); // Set line width for the separation line
+
+    // Draw separation line
+    doc.line(separationLineX, 27, separationLineX, yPos - 10); // Draw separation line on each page
+
+    // Condition for adding a new page based on account count
+    if (accountCount === 2) {
+        // If we have exactly 2 accounts, we prepare to add a new page for TRXID and discounts
+        doc.addPage();
+        yPos = 35; // Reset yPos for the new page
+    }
+
+    // This block now executes for both when there's 1 account on the last page and after adding a new page for 2 accounts
+    // Centering TRXID, discount, and total price after discount
+    let centerPositionX = 105; // Assuming A4 size for center alignment
+
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(128, 0, 128); // Set text color to purple for consistency
+
+    // Reset yPos for spacing if only 1 account on the page or it's a new page for final details
+    yPos = accountCount === 2 ? 35 : yPos + 20;
+
+    // Display TRXID, discount, and total price after discount at the center
+    doc.text(`TRXID: ${trxid}`, centerPositionX, yPos, null, null, 'center');
     yPos += 10; // Additional space before showing the discount
-    // Extract and format discount and total price information
+
+    // Assuming the logic to get the discount and total price information is correct
     const totalPriceElement = document.getElementById('totalPrice').innerHTML;
     const [officialDiscountText, totalPriceAfterDiscountText] = totalPriceElement.split('<br>').map(text => text.trim());
 
-    // Adjust font for discount and total price details
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
-    doc.text(officialDiscountText, 20, yPos);
+    doc.text(officialDiscountText, centerPositionX, yPos, null, null, 'center');
+    yPos += 10;
+    doc.text(totalPriceAfterDiscountText, centerPositionX, yPos, null, null, 'center');
 
-    yPos += 10; // Space between discount and total price text
-    doc.text(totalPriceAfterDiscountText, 20, yPos);
+    // Note: Adjust the `centerPositionX` as needed based on your document's layout and requirements
+}
+
+    });
 
     // Save the PDF document
     doc.save('FundedNext_Invoice.pdf');
