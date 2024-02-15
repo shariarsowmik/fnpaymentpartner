@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Selection</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <h1 id="pageTitle">FundedNext Payment Partner Portal</h1>
+</header>
+<div class="main-container">
+    <div class="accounts-container" id="accountsContainer">
+        <!-- Dynamic account boxes will be added here -->
+    </div>
+    <div class="pricing-section">
+        <div id="selectionSummaries">
+            <!-- Dynamic selection summaries will be inserted here -->
+        </div>
+        <p id="totalPrice">Total Price: $0</p>
+        <button id="downloadInvoiceBtn">Download Invoice</button>
+        <div id="trxidInputContainer" style="display:none;">
+            <input type="text" id="trxidInput" placeholder="Complete the Payment and Submit Your TRXID">
+            <button id="submitTrxidBtn">Submit</button>
+        </div>
+    </div>
+</div>
+<button id="addAccountBtn">Add Account</button>
+<script src="script.js"></script>
+<!-- Include jsPDF library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
+</body>
+</html>
