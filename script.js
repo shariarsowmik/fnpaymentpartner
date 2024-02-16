@@ -239,7 +239,7 @@ function calculatePriceForAccount(challengeType, swapType, stepType, sizeOfAccou
             <label>Broker:</label>
             <select class="broker">
                 <option value="growthnext">GrowthNext</option>
-                <option value="fundednext">Funded</option>
+                <option value="fundednext">FundedNext</option>
             </select>
         </div>
     `;
@@ -359,25 +359,31 @@ function generatePDF(trxid) {
     doc.setFont(undefined, 'normal');
     doc.setTextColor(0, 0, 0);
 
-    // Calculating positions based on percentage
-    const itemsWidth = 170 * 0.7; // 70% of the usable width for items
     const itemsPositionX = 20; // Starting X for items (left side)
-    const separationLineX = itemsPositionX + itemsWidth; // Position for the separation line
-    const priceWidth = 150 * 0.2; // 30% of the usable width for price
-    const pricePositionX = separationLineX + (160 * 0.25); // Starting X for price (right side), just after the separation line
+    const separationLineX = itemsPositionX + (170 * 0.7); // Position for the separation line, adjusted to dynamically place the vertical line
+    const pricePositionX = 160; // Starting X for price (right side)
 
     // Draw table headers
     doc.setFont(undefined, 'bold');
     doc.text("ITEMS", itemsPositionX, yPos);
-    doc.text("PRICE", pricePositionX, yPos, { align: "right" });
+    doc.text("PRICE", 179, yPos, { align: "right" });
 
     yPos += 10; // Move to next row
 
     let accountCount = 0; // Counter to track the number of accounts on each page
     let totalAccounts = document.querySelectorAll('.account').length;
 
-    // Loop through each account to add their details to the PDF
     document.querySelectorAll('.account').forEach((account, index) => {
+        if (accountCount >= 2) {
+            // Draw the vertical separation line before adding a new page
+            doc.line(separationLineX, 35, separationLineX, yPos - 5); // Adjust the line's length dynamically based on yPos
+            doc.addPage();
+            yPos = 35; // Reset yPos for the new page
+            accountCount = 0; // Reset account count for the new page
+        }
+
+        accountCount++; // Increment account count for this page
+
         const clientName = account.querySelector('.client-name').value;
         const clientEmail = account.querySelector('.client-email').value;
         const clientCountry = account.querySelector('.client-country').value;
@@ -389,8 +395,7 @@ function generatePDF(trxid) {
         const broker = account.querySelector('.broker').value;
         const addons = Array.from(account.querySelectorAll('input[type="checkbox"]:checked')).map(addon => addon.getAttribute('data-label')).join(', ');
 
-        // Display client information first.
-        yPos += 5;
+      yPos += 5;
         doc.setFont(undefined, 'bold'); // Switch to bold font
         doc.setTextColor(128, 0, 128); // Set text color to purple
 
@@ -408,9 +413,8 @@ function generatePDF(trxid) {
         doc.text(`Email: ${clientEmail}`, itemsPositionX, yPos);
         yPos += 10;
         doc.text(`Country: ${clientCountry}`, itemsPositionX, yPos);
-        yPos += 20; // Add a 2-line gap after "Country"
+        yPos += 20; // Add a 2-line gap after "Country"// Your logic to add account details here, incrementing yPos accordingly
 
-        // Display other account details
         let addonsDisplay;
         let addonsLineGap = '';
         if (addons) {
@@ -437,66 +441,50 @@ function generatePDF(trxid) {
         accountDetails.forEach(detail => {
             doc.text(detail, itemsPositionX, yPos);
             yPos += 10;
-        });
+        }); // Add a 2-line gap after "Country"// Your logic to add account details here, incrementing yPos accordingly
 
-        // Calculate and display the price for this account
         const price = calculatePriceForAccount(challengeType, swapType, stepType, sizeOfAccount, account.querySelectorAll('input[type="checkbox"]'));
         let priceStr = `$${price.toFixed(2)}`;
         doc.text(priceStr, 180, yPos - 5, { align: "right" }); // Ensure price is aligned to the right, within the price section
 
-        yPos += 10; // Move to next row for the next account or final summary
 
-        accountCount++; // Increment the account count for this page
+        // At the end of the last account or at the end of each page
+        if (index === totalAccounts - 1) {
+            // Draw the vertical separation line after the last account's details
+            doc.line(separationLineX, 35, separationLineX, yPos);
+        }
+    });
 
-        // If two accounts have been displayed on this page or if this is the last account, start a new page for TRXID, discount, and total price after discount
-        if (accountCount === 2 || index === totalAccounts - 1) {
-    doc.setDrawColor(128, 0, 128); // Set draw color to purple for the separation line
-    doc.setLineWidth(0.5); // Set line width for the separation line
-
-    // Draw separation line
-    doc.line(separationLineX, 27, separationLineX, yPos - 10); // Draw separation line on each page
-
-    // Condition for adding a new page based on account count
-    if (accountCount === 2) {
-        // If we have exactly 2 accounts, we prepare to add a new page for TRXID and discounts
-        doc.addPage();
-        yPos = 35; // Reset yPos for the new page
+    // Draw the vertical separation line for the last page if it hasn't been drawn yet
+    if (totalAccounts % 2 !== 0) {
+        doc.line(separationLineX, 35, separationLineX, yPos - 5);
     }
 
-    // This block now executes for both when there's 1 account on the last page and after adding a new page for 2 accounts
-    // Centering TRXID, discount, and total price after discount
-    let centerPositionX = 105; // Assuming A4 size for center alignment
+    // Determine if a new page is needed for the TRXID and discount information
+    if (totalAccounts % 2 === 0) {
+        doc.addPage();
+        yPos = 35;
+    } else {
+        yPos += 10; // Add a little space if continuing on the same page
+    }
 
+    // Add TRXID, discount, and total price info
     doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
-    doc.setTextColor(128, 0, 128); // Set text color to purple for consistency
+    doc.text(`TRXID: ${trxid}`, 105, yPos, null, null, 'center');
+    yPos += 10;
 
-    // Reset yPos for spacing if only 1 account on the page or it's a new page for final details
-    yPos = accountCount === 2 ? 35 : yPos + 20;
-
-    // Display TRXID, discount, and total price after discount at the center
-    doc.text(`TRXID: ${trxid}`, centerPositionX, yPos, null, null, 'center');
-    yPos += 10; // Additional space before showing the discount
-
-    // Assuming the logic to get the discount and total price information is correct
     const totalPriceElement = document.getElementById('totalPrice').innerHTML;
     const [officialDiscountText, totalPriceAfterDiscountText] = totalPriceElement.split('<br>').map(text => text.trim());
 
     doc.setFontSize(14);
-    doc.setFont(undefined, 'bold');
-    doc.text(officialDiscountText, centerPositionX, yPos, null, null, 'center');
+    doc.text(officialDiscountText, 105, yPos, null, null, 'center');
     yPos += 10;
-    doc.text(totalPriceAfterDiscountText, centerPositionX, yPos, null, null, 'center');
-
-    // Note: Adjust the `centerPositionX` as needed based on your document's layout and requirements
-}
-
-    });
+    doc.text(totalPriceAfterDiscountText, 105, yPos, null, null, 'center');
 
     // Save the PDF document
     doc.save('FundedNext_Invoice.pdf');
 }
-
 
     addAccountBtn.addEventListener('click', addAccount);
     // Initialize the first account
