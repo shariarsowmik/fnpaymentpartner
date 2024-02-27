@@ -7,8 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const trxidInput = document.getElementById('trxidInput');
 
     const officialDiscounts = {
-        smallAccount: 0, // 5% discount for small accounts
-        bigAccount: 0 // 10% discount for big accounts
+        smallAccount: 10, // 5% discount for small accounts
+        bigAccount: 10 // 10% discount for big accounts
     };
 
     let accountCount = 0;
