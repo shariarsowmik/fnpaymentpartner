@@ -100,7 +100,7 @@ function calculatePriceForAccount(challengeType, swapType, stepType, sizeOfAccou
                     addonIncrease = addon.value === 'lifeTimePayout' ? 0.30 : 0.10; // No "No Minimum Trading Days" for Express
                     break;
                 case 'evaluation':
-                    addonIncrease = addon.value === 'lifeTimePayout' ? 1.20 :
+                    addonIncrease = addon.value === 'lifeTimePayout' ? 0.20 :
                                     addon.value === 'noMinimumDays' ? 0.15 :
                                     addon.value === 'refund' || addon.value === '125Refund' ? 0.10 : 0;
                     break;
